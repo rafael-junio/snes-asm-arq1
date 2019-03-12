@@ -6,8 +6,7 @@ Clone this repository on your linux (https://github.com/vhelin/wla-dx) and them 
 ```
 cmake -G ''Unix Makefiles'' . 
 make 
-make 
-install 
+make install 
 wla-65816
 ```
 
