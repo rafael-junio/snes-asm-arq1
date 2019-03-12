@@ -1,5 +1,5 @@
 # To run
-Just download any SNES emulator and load the "source.smc"
+Just download any SNES emulator and load the "sourceCompiled.smc"
 # To compile
 Clone this repository on your linux (https://github.com/vhelin/wla-dx) and them on the root of the wla-dx repository:
 
