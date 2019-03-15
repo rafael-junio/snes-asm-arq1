@@ -16,7 +16,7 @@
 
 ; Needed to satisfy interrupt definition in "Header.inc".
 VBlank:
-  RTI
+  			RTI
  
 .bank 0
 .section "MainCode"
@@ -30,7 +30,7 @@ Start:
 			stz $2122			; Store 0 to the second byte of $2122 (high byte)
 
 Forever:
-	    jmp Start
+	    	jmp Start
 
 DMAPalette:
 			phb								;push data bank register
