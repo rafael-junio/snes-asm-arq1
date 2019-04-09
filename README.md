@@ -3,7 +3,7 @@ Just download any SNES emulator and load the "sourceCompiled.smc"
 # To compile
 Clone this repository on your linux (https://github.com/vhelin/wla-dx) and them on the root of the wla-dx repository:
 
-Linux
+# Linux
 ```
 cmake -G ''Unix Makefiles'' . 
 make 
@@ -18,7 +18,7 @@ After that you just need two commands to compile to the "source.smc"
 sudo wla-65816 -v source.asm
 wlalink -v sourcelink.link sourceCompiled.smc
 ```
-Windows
+# Windows
 
 ```
 Download the 9.8a version
