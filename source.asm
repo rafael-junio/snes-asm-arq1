@@ -24,7 +24,6 @@
 	jsr DMAPalette
 .endm
 
-; Needed to satisfy interrupt definition in "Header.inc".
 VBlank:
   	RTI
  
@@ -47,13 +46,6 @@ Start:
 
 	jsr SetupVideo
 
-;  			lda #%00011111      ; load red (0000000000011111) on acumulator (low byte)
-;  		    sta $2122			; store from acumulator on low byte of $2122
-;    		stz $2122           ; second byte has no data, so we write a 0 (high byte)
-;  		    sta $2100           ; Turn on screen, full brightness
-;			stz $2122			; Store 0 to memory $2122 (low byte)
-;			stz $2122			; Store 0 to the second byte of $2122 (high byte)
-
 Forever:
 	jmp Forever
 
@@ -62,21 +54,25 @@ SetupVideo:
 	lda #$00
 	sta $2105					; Background mode 0
 
-	lda #$04					
+	lda #$04					; in binary 8 bits, 6 for the address of the tile and two for the size (aaaaaass)					
 	sta $2107					; BG1 Tile map Location
 	
 	lda #%00000000
 	sta $210B
 
-	lda #$01					
+	lda #%00000001					
 	sta $212C					; Enable BG1
 
-	lda #$FF
-	sta $210E
+	lda #$81					; 81 in HEX
+	sta $210D					; $210D BG1 Horizontal Scroll
+	sta $210D
+
+	lda #$81					; FF in HEX
+	sta $210E					; $210E BG1 Vertical Scroll
 	sta $210E
 
 	lda #$0F
-	sta $2100
+	sta $2100					; Turn the screen on
 
 	rts
 	
