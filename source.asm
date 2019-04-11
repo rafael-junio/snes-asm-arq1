@@ -1,53 +1,85 @@
 .include "Header.inc"
 .include "InitSNES.asm"
+.include "LoadGraphics.asm"
 
 
-.Macro LoadBlockToVRAM
+.equ PalletteNum $0000 			; Variable with the pallette starter
 
-	lda #$80
-	sta $2115 			; VRAM address increment register
-
-	ldx #\2
-	stx $2116
-	lda #:\1
-	ldx #\1
-	ldy #\3
-	jsr LoadVRAM
+.Macro Stall
+	.rept 50
+		WAI
+	.endr
 .endm
 
-.Macro LoadPalette
-	lda #\2							;Needs to understand what the #\2 means
-	sta $2121
-	lda #:\1
-	ldx #\1
-	ldy #(3 * 2)
-	jsr DMAPalette
-.endm
 
-VBlank:
-  	RTI
- 
 .bank 0
 .section "MainCode"
 
 Start:
 	InitSNES						; Clear all registers and memory address
 
-	LoadPalette BG_Palette, 0, 4
+	rep	#$10
+	sep #$20
+
+	stz PalletteNum				; Store 0 on variable
+
+	LoadPalette BG_Palette, 0, 14
 
 	LoadBlockToVRAM Tiles, $0000, $0020 
 
+
 	lda #$80
-	sta $2115
-	ldx #$0400
-	stx $2116
+	sta $2115					; Set the VRAM Address Increment Mode to after acessing high byte
+	ldx #$0400					;
+	stx $2116					; VRAM Address
 	lda #$01
-	sta $2118
+	sta $2118					; VRAM data Write
 
 	jsr SetupVideo
 
+	lda #$80
+	sta $4200					; Enable NMI-Vblank
+
 Forever:
+	Stall
+
+    lda PalletteNum
+    clc
+    adc #$04
+    and #$0C        ; If palette starting color > 28 (00011100), make 0
+    sta PalletteNum
+
 	jmp Forever
+
+VBlank:
+    rep #$30        ; A/mem=16 bits, X/Y=16 bits (to push all 16 bits)
+    phb
+	pha
+	phx
+	phy
+	phd
+
+	sep #$20        ; A/mem=8 bit    
+    
+    stz $2115       ; Setup VRAM
+    ldx #$0400
+    stx $2116       ; Set VRAM address
+    lda PalletteNum
+    sta $2119       ; Write to VRAM
+
+    lda $4210       ; Clear NMI flag
+	
+	rep #$30        ; A/Mem=16 bits, X/Y=16 bits 
+    
+    pld 
+	ply 
+	plx 
+	pla 
+	plb 
+
+    sep #$20
+    
+    RTI
 
 SetupVideo:
 
@@ -57,10 +89,9 @@ SetupVideo:
 	lda #$04					; in binary 8 bits, 6 for the address of the tile and two for the size (aaaaaass)					
 	sta $2107					; BG1 Tile map Location
 	
-	lda #%00000000
-	sta $210B
+	stz $210B					; Tile location for BG1 and BG2 (11112222)
 
-	lda #%00000001					
+	lda #$01					
 	sta $212C					; Enable BG1
 
 	lda #$81					; 81 in HEX
@@ -75,40 +106,19 @@ SetupVideo:
 	sta $2100					; Turn the screen on
 
 	rts
-	
-DMAPalette:	
-	stx $4302						;store the ldx #\1 (data offset) in the $4302 (DMA source address channel 0)
-	sta $4304						;store data bank of lda in $4304 (DMA source address channel 0)
-	sty $4305						;store syze data into $4305 (DMA number of bytes to transfer)
 
-	;initialize de DMA
-	stz $4300						;store zero on the DMA control register
-	lda #$22						;load on acumulator the number 22 to load it on the DMA 43x1 in the format ($21xx)
-	sta $4301						;store $2122 (CGRAM) on DMA destination register
-	lda #$01						;load 01 on acumulator
-	sta $420B						;Start the DMA (with 01 from acumulator)
-
-	rts 								;return
-
-LoadVRAM:
-	stx $4302
-	sta $4304
-	sty $4305
-
-	lda #$01
-	sta $4300
-	lda #$18
-	sta $4301
-	lda #$01
-	sta $420B
-
-	rts
 .ends
 
 .BANK 1 SLOT 0
 .ORG 0
 .SECTION "CharacterData"
 
-    .INCLUDE "tiles/tiles.inc"
+	Tiles:
+		.DW $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+		.DB $7C,$00,$BA,$7C,$82,$7C,$7C,$00
+		.DB $10,$00,$D6,$00,$7C,$00,$38,$00
 
+	BG_Palette:
+	.db $00, $00, $C5, $4D, $09, $4B, $98, $FF, $0C, $2C, $0D, $FF, $81, $00, $CA, $00
+    .db $26, $0D, $60, $11, $64, $09, $41, $58, $E0, $38, $FF, $03, $E0, $5D, $81, $02, 
 .ENDS
