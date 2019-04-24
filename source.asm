@@ -6,6 +6,8 @@
 .equ PalletteNum $0000 			; Variable with the pallette starter
 .equ hexXPos $0001
 .equ hexYPos $0002
+.equ xPosBg2 $0003
+.equ yPosBg2 $0004
 
 .Macro Stall
 	.rept 10
@@ -26,17 +28,28 @@ Start:
 	stz PalletteNum				; Store 0 on variable
 	stz hexXPos
 	stz hexYPos
+	stz xPosBg2
+	stz yPosBg2
 
 	LoadPalette BG_Palette, 0, 16
+	LoadPalette BG_Palette, 32, 48
 
-	LoadBlockToVRAM Tiles, $0000, $0040 
+	LoadBlockToVRAM Tiles, $0000, $0040
 
 	lda #$80
 	sta $2115					; Set the VRAM Address Increment Mode to after acessing high byte
-	ldx #$0400					;
+
+	ldx #$0437					
+	stx $2116					; VRAM Address
+	lda #$03
+	sta $2118					; VRAM data Write
+
+	
+	ldx #$0401					
 	stx $2116					; VRAM Address
 	lda #$01
 	sta $2118					; VRAM data Write
+
 
 	jsr SetupVideo
 
@@ -51,56 +64,56 @@ Forever:
     adc #$04
     and #$0C        ; If palette starting color > 28 (00011100), make 0
     sta PalletteNum
+	
+	ldx #$0401
+	stx $2116
+	lda PalletteNum
+    sta $2119       ; Write to VRAM
+
+	ldx #$0437
+	stx $2116
+	lda PalletteNum
+    sta $2119       ; Write to VRAM
 
 	lda hexXPos
 	clc
 	sbc #$01
 	sta hexXPos
 
+	lda hexXPos					
+	sta $210D					; $210D BG1 Horizontal Scroll
+	sta $210D
+
 	lda hexYPos
 	clc
 	sbc #$04
 	sta hexYPos
 
-	lda hexXPos					
-	sta $210D					; $210D BG1 Horizontal Scroll
-	sta $210D
-
 	lda hexYPos					
 	sta $210E					; $210E BG1 Vertical Scroll
 	sta $210E
 
+	lda xPosBg2
+	clc
+	adc #$01
+	sta xPosBg2
+
+	lda xPosBg2
+	sta $210F					; $210F BG2 Horizontal Scroll
+	sta $210F
+
+	lda yPosBg2
+	clc
+	adc #$04
+	sta yPosBg2
+
+	lda yPosBg2
+	sta $2110					; $2110 BG2 Vertical Scroll
+	sta $2110
+
 	jmp Forever
 
-VBlank:
-    rep #$30        ; A/mem=16 bits, X/Y=16 bits (to push all 16 bits)
-    phb
-	pha
-	phx
-	phy
-	phd
 
-	sep #$20        ; A/mem=8 bit    
-    
-    stz $2115       ; Setup VRAM
-    ldx #$0400
-    stx $2116       ; Set VRAM address
-    lda PalletteNum
-    sta $2119       ; Write to VRAM
-
-    lda $4210       ; Clear NMI flag
-	
-	rep #$30        ; A/Mem=16 bits, X/Y=16 bits 
-    
-    pld 
-	ply 
-	plx 
-	pla 
-	plb 
-
-    sep #$20
-    
-    RTI
 
 SetupVideo:
 
@@ -113,7 +126,7 @@ SetupVideo:
 	lda #$04
 	sta $2108					; BG2 Tile map Location
 	
-	lda #$20
+	lda #$00
 	sta $210B					; Tile location for BG1 and BG2 (22221111)
 
 	lda #$03					

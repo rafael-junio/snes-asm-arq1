@@ -140,4 +140,31 @@ DMAPalette:
     rts         ; return from subroutine
 ;============================================================================
 
+VBlank:
+    rep #$30        ; A/mem=16 bits, X/Y=16 bits (to push all 16 bits)
+    phb
+	pha
+	phx
+	phy
+	phd
+
+	sep #$20        ; A/mem=8 bit    
+    
+    stz $2115       ; Setup VRAM
+    ldx #$0400
+    stx $2116       ; Set VRAM address
+
+    lda $4210       ; Clear NMI flag
+	
+	rep #$30        ; A/Mem=16 bits, X/Y=16 bits 
+    
+    pld 
+	ply 
+	plx 
+	pla 
+	plb 
+
+    sep #$20
+    
+    RTI
 .ENDS
