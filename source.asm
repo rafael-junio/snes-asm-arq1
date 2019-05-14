@@ -8,10 +8,11 @@
 .equ hexYPos $0002
 .equ xPosBg2 $0003
 .equ yPosBg2 $0004
+.equ mosaic  $0005
 
 
 .Macro Stall
-	.rept 1
+	.rept 20
 		WAI
 	.endr
 .endm
@@ -30,6 +31,8 @@ Start:
 	stz hexYPos
 	stz xPosBg2
 	stz yPosBg2
+    lda #$02
+    sta mosaic
 
 	LoadPalette BG_Palette, 0, 16
 	LoadPalette BG_Palette, 32, 48
@@ -56,7 +59,17 @@ Forever:
     and #$0C        ; If palette starting color > 28 (00011100), make 0
     sta PalletteNum
     sta $2119
-	
+
+
+	lda mosaic
+    sta $2106
+
+    
+    lda mosaic
+    clc
+    adc #$10
+    sta mosaic
+
 	; lda hexXPos
 	; clc
 	; sbc #$01
@@ -389,6 +402,7 @@ SetupVideo:
 
 
     Tile_Map:
+
     .dw $0001, $0005, $0009, $000D
     .dw $0011, $0015, $0019, $001D
     .dw $0021, $0025, $0029, $002D
